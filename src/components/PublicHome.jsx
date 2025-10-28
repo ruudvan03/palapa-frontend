@@ -5,26 +5,26 @@ import ReservationModal from './ReservationModal';
 const LOCATION_DATA = {
     name: "Palapa La Casona",
     address: "Carretera Costera 200, Llano Grande, 70947 San Pedro Pochutla, Oax.",
-    mapsUrl: "https://maps.google.com/?cid=12263256272020396109&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ",
+    mapsUrl: "YOUR_GOOGLE_MAPS_URL_HERE", // Reemplaza con tu URL real o usa una variable de entorno
     displayAddress: "Carretera Costera 200, Llano Grande, San Pedro Pochutla, Oax."
 };
 
-// Función auxiliar para obtener icono y descripción de habitación
-const getRoomVisual = (tipo) => {
+// Función auxiliar para obtener descripción de habitación
+const getRoomDescription = (tipo) => {
     switch (tipo.toLowerCase()) {
-        case 'individual': return { icon: "🛌", description: "1 Cama Matrimonial (Máximo 2)" };
-        case 'doble': return { icon: "🛌🛌", description: "2 Camas Matrimoniales (Máximo 4)" };
-        case 'king': case 'rey': return { icon: "👑", description: "1 Cama King Size (Máximo 2)" };
-        case 'doble superior': return { icon: "✨", description: "2 Matrimoniales + Balcón" };
-        case 'king deluxe': return { icon: "☀️", description: "1 King Size + Terraza" };
-        default: return { icon: "🏨", description: "Habitación Estándar" };
+        case 'individual': return "1 Cama Matrimonial (Máximo 2)";
+        case 'doble': return "2 Camas Matrimoniales (Máximo 4)";
+        case 'king': case 'rey': return "1 Cama King Size (Máximo 2)";
+        case 'doble superior': return "2 Matrimoniales + Balcón";
+        case 'king deluxe': return "1 King Size + Terraza";
+        default: return "Habitación Estándar";
     }
 }
 
 const PublicHome = ({ onShowLogin }) => {
 
     const [allRooms, setAllRooms] = useState([]);
-    const [whatsappLink, setWhatsappLink] = useState('tel:+529514401726');
+    const [whatsappLink, setWhatsappLink] = useState('tel:+529514401726'); // Fallback
     const [searchData, setSearchData] = useState({ llegada: '', salida: '', huespedes: 1 });
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [availableRooms, setAvailableRooms] = useState([]);
@@ -33,7 +33,8 @@ const PublicHome = ({ onShowLogin }) => {
     const [initialLoadError, setInitialLoadError] = useState(null);
     const [searchId, setSearchId] = useState(null);
 
-    const heroHeightVh = 85;
+    // Altura del hero a 100vh
+    const heroHeightVh = 100;
     const heroHeightStyle = { height: `${heroHeightVh}vh` };
     const mainPaddingTopStyle = { paddingTop: `${heroHeightVh}vh` };
 
@@ -43,9 +44,11 @@ const PublicHome = ({ onShowLogin }) => {
             setInitialLoadError(null);
             let roomsData = [];
             try {
+                // Ahora esta ruta debe devolver el array imageUrls
                 const roomsResponse = await fetch('http://localhost:5000/api/habitaciones');
                 if (!roomsResponse.ok) { throw new Error(`Error ${roomsResponse.status} al cargar habitaciones`); }
                 roomsData = await roomsResponse.json();
+                console.log("Habitaciones cargadas:", roomsData); // Verifica si llega imageUrls
             } catch (error) { console.error("Error fetch habitaciones:", error); setInitialLoadError(error.message); }
             try {
                 const configResponse = await fetch('http://localhost:5000/api/config/contacto');
@@ -62,9 +65,8 @@ const PublicHome = ({ onShowLogin }) => {
         setSearchError(null);
     };
 
-    // --- FUNCIÓN handleSearch CON CONSOLE.LOGS ---
     const handleSearch = async () => {
-        console.log("PASO 1: Se hizo clic en Buscar."); // <-- LOG 1
+        console.log("PASO 1: Se hizo clic en Buscar.");
         const { llegada, salida } = searchData;
         setSearchError(null);
 
@@ -81,7 +83,7 @@ const PublicHome = ({ onShowLogin }) => {
 
         try {
             const url = `http://localhost:5000/api/habitaciones/disponibles?fechaInicio=${llegada}&fechaFin=${salida}`;
-            console.log("PASO 2: Llamando a la API:", url); // <-- LOG 2
+            console.log("PASO 2: Llamando a la API:", url);
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -95,19 +97,18 @@ const PublicHome = ({ onShowLogin }) => {
             }
 
             const data = await response.json();
-            console.log("PASO 3: Datos recibidos de la API:", data); // <-- LOG 3
+            console.log("PASO 3: Datos recibidos de la API:", data);
             setAvailableRooms(data);
             setSearchId(new Date().getTime());
 
-            console.log("PASO 4: Intentando abrir el modal (setIsModalVisible a true)"); // <-- LOG 4
-            setIsModalVisible(true); // <-- ESTA LÍNEA ES CRUCIAL
+            console.log("PASO 4: Intentando abrir el modal (setIsModalVisible a true)");
+            setIsModalVisible(true);
 
         } catch (error) {
             console.error("Error durante la búsqueda:", error);
             setSearchError(error.message || "Error de conexión con el servidor.");
         }
     };
-    // --- FIN FUNCIÓN handleSearch ---
 
 
     return (
@@ -167,7 +168,6 @@ const PublicHome = ({ onShowLogin }) => {
                             <label htmlFor="huespedes" className="block text-sm font-semibold mb-2">Huéspedes</label>
                             <div className="relative"><select id="huespedes" name="huespedes" value={searchData.huespedes} onChange={handleChange} className="w-full p-3 pr-10 border rounded-lg appearance-none"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4+</option></select><span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">▼</span></div>
                         </div>
-                        {/* BOTÓN BUSCAR CON onClick={handleSearch} */}
                         <button onClick={handleSearch} className="w-full md:w-1/4 p-3 bg-[#6C7D5C] text-white font-bold rounded-lg text-lg h-[52px] mt-auto hover:bg-[#5a6b4d]">Buscar</button>
                     </div>
                     {searchError && <p className="mt-2 text-center text-red-600 font-medium bg-red-100 p-2 rounded-lg shadow-inner">{searchError}</p>}
@@ -181,31 +181,52 @@ const PublicHome = ({ onShowLogin }) => {
                             <p className="font-bold">¡Error!</p> <p>{initialLoadError}</p>
                         </div>
                     )}
-                    {/* Sección Hotel con estilo semi-transparente */}
+                    {/* Sección Hotel - CORRECCIÓN EN LA CONSTRUCCIÓN DE displayImageUrl */}
                     <section id="hotel" className="py-12">
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestras <span className="text-[#D4AF37]">Habitaciones</span></h3>
                         {loadingRooms ? <p className="text-center text-lg">Cargando...</p> : !initialLoadError && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {allRooms.map((room) => {
-                                    const visual = getRoomVisual(room.tipo);
+                                    const description = getRoomDescription(room.tipo);
+
+                                    // ===== INICIO CORRECCIÓN =====
+                                    const defaultImageUrl = 'https://via.placeholder.com/600x400/cccccc/888888?text=Imagen+no+disponible'; // Placeholder más claro
+                                    let displayImageUrl = defaultImageUrl;
+
+                                    if (room.imageUrls && room.imageUrls.length > 0) {
+                                        const firstUrl = room.imageUrls[0];
+                                        // Verifica si la URL es relativa (empieza con '/') y no está vacía
+                                        if (firstUrl && firstUrl.startsWith('/')) {
+                                            // Construye la URL completa anteponiendo el origen del backend
+                                            // ¡IMPORTANTE! Asegúrate de que 'http://localhost:5000' sea correcto
+                                            displayImageUrl = `http://localhost:5000${firstUrl}`;
+                                        } else if (firstUrl) {
+                                            // Si no empieza con '/', asume que ya es una URL completa
+                                            displayImageUrl = firstUrl;
+                                        }
+                                        // Si firstUrl es null, undefined o vacío, se queda con defaultImageUrl
+                                    }
+                                    // Descomenta este log para depurar en la consola del navegador:
+                                    // console.log(`Habitación ${room.numero} - URL: ${displayImageUrl}`);
+                                    // ===== FIN CORRECCIÓN =====
+
                                     return (
-                                        <div key={room._id}
-                                             className="rounded-xl overflow-hidden border border-gray-300/30 group
-                                                        bg-white/70 backdrop-blur-md shadow-lg
-                                                        transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl cursor-pointer"
-                                        >
-                                            <div className="h-52 w-full bg-[#1C2A3D]/80 flex items-center justify-center text-7xl text-white group-hover:opacity-90 transition-opacity rounded-t-xl">
-                                                {visual.icon}
+                                        <div key={room._id} className="rounded-xl overflow-hidden border border-gray-300/30 group bg-white/70 backdrop-blur-md shadow-lg transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl cursor-pointer">
+                                            <div
+                                                className="h-52 w-full bg-cover bg-center rounded-t-xl"
+                                                style={{ backgroundImage: `url('${displayImageUrl}')` }}
+                                                title={`Habitación ${room.tipo} ${room.numero}`}
+                                            >
+                                                {/* Se usa la imagen placeholder por defecto si no hay imagen */}
                                             </div>
                                             <div className="p-6 rounded-b-xl">
-                                                <h4 className="text-2xl font-bold mb-1 text-[#6C7D5C]">{room.tipo}</h4>
-                                                <p className="text-gray-800 mb-3 text-sm">{visual.description}</p>
+                                                <h4 className="text-2xl font-bold mb-1 text-[#6C7D5C] capitalize">{room.tipo}</h4>
+                                                <p className="text-gray-800 mb-3 text-sm">{description}</p>
                                                 <div className="flex justify-between items-center mt-4">
                                                     <p className="text-3xl font-extrabold">${room.precio.toFixed(2)}<span className="text-base font-normal text-gray-600"> / noche</span></p>
-                                                    <a href="#hero"
-                                                       className="py-2.5 px-6 bg-[#D4AF37] text-[#1C2A3D] font-bold rounded-full text-base hover:bg-yellow-500">
+                                                    <button onClick={handleSearch} className="py-2.5 px-6 bg-[#D4AF37] text-[#1C2A3D] font-bold rounded-full text-base hover:bg-yellow-500">
                                                         ¡Reservar!
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -217,7 +238,7 @@ const PublicHome = ({ onShowLogin }) => {
 
                     <hr className="my-16 border-gray-300/50" />
 
-                    {/* Sección Restaurante con estilo semi-transparente */}
+                    {/* Sección Restaurante */}
                     <section id="restaurante" className="py-12 px-6 md:px-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
                          <h3 className="text-4xl font-extrabold text-center mb-12">Restaurante y <span className="text-[#D4AF37]">Alberca</span></h3>
                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -240,10 +261,11 @@ const PublicHome = ({ onShowLogin }) => {
 
                     <hr className="my-16 border-gray-300/50" />
 
-                    {/* Sección Ubicación con estilo semi-transparente */}
+                    {/* Sección Ubicación */}
                     <section id="ubicacion" className="py-12 px-6 md:px-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestra <span className="text-[#D4AF37]">Ubicación</span></h3>
                         <div className="rounded-xl overflow-hidden">
+                            {/* Reemplaza TU_CLAVE_DE_API_AQUI con tu clave real de Google Maps Static API si quieres usarla */}
                             <a href={LOCATION_DATA.mapsUrl} target="_blank" rel="noopener noreferrer" title="Navegar" className="block h-96 w-full relative group">
                                 <div className="h-full w-full bg-gray-300 bg-cover bg-center" style={{ backgroundImage: "url('https://maps.googleapis.com/maps/api/staticmap?center=15.73067,-96.53540&zoom=14&size=600x400&markers=color:red%7Clabel:P%7C15.73067,-96.53540&key=TU_CLAVE_DE_API_AQUI')" }}>
                                     <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100"><p className="text-white text-2xl font-bold">🗺️ Toca para Navegar</p></div>
@@ -259,7 +281,7 @@ const PublicHome = ({ onShowLogin }) => {
                         </div>
                     </section>
 
-                    {/* Sección Contacto con estilo semi-transparente */}
+                    {/* Sección Contacto */}
                     <section id="contacto" className="py-16 text-center mt-16 p-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
                         <h3 className="text-3xl font-extrabold mb-4">¿Tienes Preguntas?</h3>
                         <p className="text-lg text-gray-800 mb-6">Llámanos o envíanos un mensaje.</p>
@@ -276,19 +298,15 @@ const PublicHome = ({ onShowLogin }) => {
                 <p className="text-xs mt-2 text-gray-400">Oaxaca.</p>
             </footer>
 
-            {/* --- Modal de Reservas CON CONSOLE.LOG Y VERIFICACIÓN --- */}
+            {/* --- Modal de Reservas --- */}
             {isModalVisible && (
-                <>
-                    {/* Este console.log solo se imprime si el modal se está renderizando */}
-                    {console.log("PASO 5: Renderizando el modal...")}
-                    <ReservationModal
-                        key={searchId} // Asegura que se reinicie
-                        isVisible={isModalVisible}
-                        onClose={() => setIsModalVisible(false)}
-                        searchData={searchData}
-                        availableRooms={availableRooms}
-                    />
-                </>
+                <ReservationModal
+                    key={searchId}
+                    isVisible={isModalVisible}
+                    onClose={() => setIsModalVisible(false)}
+                    searchData={searchData}
+                    availableRooms={availableRooms}
+                />
             )}
         </div>
     );

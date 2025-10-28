@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReservationModal from './ReservationModal';
+import RoomCard from './RoomCard'; // <-- Importa el nuevo componente
 
 // DATOS DE UBICACIÓN
 const LOCATION_DATA = {
@@ -9,17 +10,7 @@ const LOCATION_DATA = {
     displayAddress: "Carretera Costera 200, Llano Grande, San Pedro Pochutla, Oax."
 };
 
-// Función auxiliar para obtener descripción de habitación
-const getRoomDescription = (tipo) => {
-    switch (tipo.toLowerCase()) {
-        case 'individual': return "1 Cama Matrimonial (Máximo 2)";
-        case 'doble': return "2 Camas Matrimoniales (Máximo 4)";
-        case 'king': case 'rey': return "1 Cama King Size (Máximo 2)";
-        case 'doble superior': return "2 Matrimoniales + Balcón";
-        case 'king deluxe': return "1 King Size + Terraza";
-        default: return "Habitación Estándar";
-    }
-}
+// YA NO NECESITAMOS getRoomDescription aquí, se movió a RoomCard.jsx
 
 const PublicHome = ({ onShowLogin }) => {
 
@@ -181,57 +172,20 @@ const PublicHome = ({ onShowLogin }) => {
                             <p className="font-bold">¡Error!</p> <p>{initialLoadError}</p>
                         </div>
                     )}
-                    {/* Sección Hotel - CORRECCIÓN EN LA CONSTRUCCIÓN DE displayImageUrl */}
+                    {/* Sección Hotel - Usa RoomCard */}
                     <section id="hotel" className="py-12">
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestras <span className="text-[#D4AF37]">Habitaciones</span></h3>
                         {loadingRooms ? <p className="text-center text-lg">Cargando...</p> : !initialLoadError && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {allRooms.map((room) => {
-                                    const description = getRoomDescription(room.tipo);
-
-                                    // ===== INICIO CORRECCIÓN =====
-                                    const defaultImageUrl = 'https://via.placeholder.com/600x400/cccccc/888888?text=Imagen+no+disponible'; // Placeholder más claro
-                                    let displayImageUrl = defaultImageUrl;
-
-                                    if (room.imageUrls && room.imageUrls.length > 0) {
-                                        const firstUrl = room.imageUrls[0];
-                                        // Verifica si la URL es relativa (empieza con '/') y no está vacía
-                                        if (firstUrl && firstUrl.startsWith('/')) {
-                                            // Construye la URL completa anteponiendo el origen del backend
-                                            // ¡IMPORTANTE! Asegúrate de que 'http://localhost:5000' sea correcto
-                                            displayImageUrl = `http://localhost:5000${firstUrl}`;
-                                        } else if (firstUrl) {
-                                            // Si no empieza con '/', asume que ya es una URL completa
-                                            displayImageUrl = firstUrl;
-                                        }
-                                        // Si firstUrl es null, undefined o vacío, se queda con defaultImageUrl
-                                    }
-                                    // Descomenta este log para depurar en la consola del navegador:
-                                    // console.log(`Habitación ${room.numero} - URL: ${displayImageUrl}`);
-                                    // ===== FIN CORRECCIÓN =====
-
-                                    return (
-                                        <div key={room._id} className="rounded-xl overflow-hidden border border-gray-300/30 group bg-white/70 backdrop-blur-md shadow-lg transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl cursor-pointer">
-                                            <div
-                                                className="h-52 w-full bg-cover bg-center rounded-t-xl"
-                                                style={{ backgroundImage: `url('${displayImageUrl}')` }}
-                                                title={`Habitación ${room.tipo} ${room.numero}`}
-                                            >
-                                                {/* Se usa la imagen placeholder por defecto si no hay imagen */}
-                                            </div>
-                                            <div className="p-6 rounded-b-xl">
-                                                <h4 className="text-2xl font-bold mb-1 text-[#6C7D5C] capitalize">{room.tipo}</h4>
-                                                <p className="text-gray-800 mb-3 text-sm">{description}</p>
-                                                <div className="flex justify-between items-center mt-4">
-                                                    <p className="text-3xl font-extrabold">${room.precio.toFixed(2)}<span className="text-base font-normal text-gray-600"> / noche</span></p>
-                                                    <button onClick={handleSearch} className="py-2.5 px-6 bg-[#D4AF37] text-[#1C2A3D] font-bold rounded-full text-base hover:bg-yellow-500">
-                                                        ¡Reservar!
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                {/* ===== INICIO USO RoomCard ===== */}
+                                {allRooms.map((room) => (
+                                    <RoomCard
+                                        key={room._id}
+                                        room={room}
+                                        onReserveClick={handleSearch} // Pasa la función handleSearch para el botón Reservar
+                                    />
+                                ))}
+                                {/* ===== FIN USO RoomCard ===== */}
                             </div>
                         )}
                     </section>

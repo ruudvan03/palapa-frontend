@@ -14,7 +14,9 @@ const ReservationsManager = () => {
     fechaFin: '',
     tipoPago: 'efectivo',
     estado: 'pendiente',
-    // No necesitamos precioTotal aquí, se calcula en backend
+    nombreHuesped: '',
+    emailHuesped: '',
+    telefonoHuesped: '', // <-- 1. AÑADIDO AL ESTADO INICIAL
   });
   const [formError, setFormError] = useState(null);
   const [users, setUsers] = useState([]);
@@ -22,7 +24,7 @@ const ReservationsManager = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Función Fetch unificada para mayor claridad
+  // Función Fetch unificada
   const fetchReservations = async () => {
     try {
       setLoading(true);
@@ -32,11 +34,10 @@ const ReservationsManager = () => {
         throw new Error(`Error ${response.status}: No se pudieron obtener las reservas.`);
       }
       const data = await response.json();
-      // Ordenar de más viejas a más recientes
       setReservations(data.sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio)));
-      setCurrentPage(1); // Reset page on filter change
+      setCurrentPage(1);
     } catch (err) {
-      console.error("Error fetching reservations:", err); // Log detallado
+      console.error("Error fetching reservations:", err);
       setError(err.message);
       setReservations([]);
     } finally {
@@ -46,7 +47,7 @@ const ReservationsManager = () => {
 
   useEffect(() => {
     fetchReservations();
-  }, [filtro]); // Dependencia del filtro
+  }, [filtro]);
 
   const fetchModalData = async () => {
     try {
@@ -61,11 +62,10 @@ const ReservationsManager = () => {
       const roomsData = await roomsRes.json();
       setUsers(usersData);
       setRooms(roomsData);
-      setFormError(null); // Limpiar error si carga bien
+      setFormError(null);
     } catch (err) {
       console.error("Error fetching modal data:", err);
       setFormError("Error al cargar opciones: " + err.message);
-      // Mantener modal abierto pero mostrar error
     }
   };
 
@@ -75,12 +75,12 @@ const ReservationsManager = () => {
         return new Date(dateString).toISOString().split('T')[0];
     } catch (e) {
         console.error("Error formateando fecha:", dateString, e);
-        return ''; // Devuelve vacío si la fecha es inválida
+        return '';
     }
   };
 
   const handleOpenModal = (reserva = null) => {
-    fetchModalData(); // Cargar datos ANTES de mostrar el modal
+    fetchModalData();
     setFormError(null);
     if (reserva) {
       setCurrentEditingReservation(reserva);
@@ -91,12 +91,13 @@ const ReservationsManager = () => {
         fechaFin: formatDateForInput(reserva.fechaFin),
         tipoPago: reserva.tipoPago,
         estado: reserva.estado,
-        nombreHuesped: reserva.nombreHuesped || '', // Incluir nombre huésped si existe
-        emailHuesped: reserva.emailHuesped || '', // Incluir email si existe
+        nombreHuesped: reserva.nombreHuesped || '',
+        emailHuesped: reserva.emailHuesped || '',
+        telefonoHuesped: reserva.telefonoHuesped || '', // <-- 2. AÑADIDO AL EDITAR
       });
     } else {
       setCurrentEditingReservation(null);
-      setFormData({ // Reset completo
+      setFormData({
         usuarioId: '',
         habitacionId: '',
         fechaInicio: '',
@@ -105,6 +106,7 @@ const ReservationsManager = () => {
         estado: 'pendiente',
         nombreHuesped: '',
         emailHuesped: '',
+        telefonoHuesped: '', // <-- 2. AÑADIDO AL CREAR/RESET
       });
     }
     setIsModalOpen(true);
@@ -117,29 +119,34 @@ const ReservationsManager = () => {
     e.preventDefault();
     setFormError(null);
 
-    // Validaciones más estrictas
+    // Validaciones
     if (!formData.habitacionId) return setFormError('Debes seleccionar una habitación.');
     if (!formData.fechaInicio || !formData.fechaFin) return setFormError('Las fechas son obligatorias.');
     if (new Date(formData.fechaInicio) >= new Date(formData.fechaFin)) {
       return setFormError('La fecha de salida debe ser posterior a la de llegada.');
     }
-    // Si es huésped público, requerir nombre (email es opcional pero bueno tenerlo)
-    if (!formData.usuarioId && !formData.nombreHuesped) {
-         return setFormError('El nombre del huésped es requerido para reservas públicas.');
+    // VALIDACIÓN MEJORADA
+    if (!formData.usuarioId && (!formData.nombreHuesped || !formData.telefonoHuesped)) {
+         return setFormError('El nombre y teléfono del huésped son requeridos para reservas públicas.');
     }
 
-
-    // Preparar datos para enviar (excluir campos vacíos innecesarios si aplica)
+    // Preparar datos para enviar
     const bodyData = {
         habitacionId: formData.habitacionId,
         fechaInicio: formData.fechaInicio,
         fechaFin: formData.fechaFin,
         tipoPago: formData.tipoPago,
         estado: formData.estado,
-        // Enviar usuarioId solo si tiene valor, si no, enviar nombreHuesped y emailHuesped
-        ...(formData.usuarioId ? { usuarioId: formData.usuarioId } : { nombreHuesped: formData.nombreHuesped, emailHuesped: formData.emailHuesped })
+        // Enviar usuarioId o los datos del huésped público (incluyendo teléfono)
+        // --- 4. AÑADIDO 'telefonoHuesped' AL GUARDAR ---
+        ...(formData.usuarioId 
+            ? { usuarioId: formData.usuarioId } 
+            : { 
+                nombreHuesped: formData.nombreHuesped, 
+                emailHuesped: formData.emailHuesped, 
+                telefonoHuesped: formData.telefonoHuesped // <-- AÑADIDO AQUÍ
+            })
     };
-
 
     const url = currentEditingReservation
       ? `http://localhost:5000/api/reservas/${currentEditingReservation._id}`
@@ -157,7 +164,7 @@ const ReservationsManager = () => {
         throw new Error(errorData.message || `Error ${response.status} al guardar.`);
       }
 
-      await fetchReservations(); // Recargar la lista con el filtro actual
+      await fetchReservations();
       handleCloseModal();
     } catch (err) {
       console.error("Error en submit:", err);
@@ -166,34 +173,35 @@ const ReservationsManager = () => {
   };
 
   const handleDelete = async (reservaId) => {
+    // ... (código sin cambios) ...
     if (window.confirm('¿Estás seguro de que quieres eliminar esta reserva permanentemente?')) {
-      try {
-        const response = await fetch(`http://localhost:5000/api/reservas/${reservaId}`, { method: 'DELETE' });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status} al eliminar.`);
+        try {
+          const response = await fetch(`http://localhost:5000/api/reservas/${reservaId}`, { method: 'DELETE' });
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || `Error ${response.status} al eliminar.`);
+          }
+          await fetchReservations();
+        } catch (err) {
+          console.error("Error al eliminar:", err);
+          alert(`Error: ${err.message}`);
         }
-        await fetchReservations(); // Recargar con filtro actual
-      } catch (err) {
-        console.error("Error al eliminar:", err);
-        alert(`Error: ${err.message}`);
       }
-    }
   };
 
   const handleUpdateStatus = async (reservaId, newStatus) => {
-    // No necesitamos confirmación aquí si ya está en los botones individuales
+    // ... (código sin cambios) ...
     try {
         const response = await fetch(`http://localhost:5000/api/reservas/${reservaId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: newStatus }), // Solo enviar el estado
+            body: JSON.stringify({ estado: newStatus }),
         });
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || `Error ${response.status} al actualizar estado.`);
         }
-        await fetchReservations(); // Recargar con filtro actual
+        await fetchReservations();
     } catch (err) {
         console.error("Error al actualizar estado:", err);
         alert(`Error: ${err.message}`);
@@ -201,12 +209,12 @@ const ReservationsManager = () => {
   };
 
   // Lógica de paginación
+  // ... (código sin cambios) ...
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = reservations.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(reservations.length / itemsPerPage);
   const paginate = (pageNumber) => {
-      // Validar que el número de página sea válido
       if (pageNumber < 1 || pageNumber > totalPages) return;
       setCurrentPage(pageNumber);
   };
@@ -218,13 +226,16 @@ const ReservationsManager = () => {
         <button onClick={() => handleOpenModal()} className="bg-[#6C7D5C] text-white py-2 px-4 rounded-md font-bold hover:bg-[#5a6b4d]">Añadir Reserva</button>
       </div>
 
+      {/* Filtros */}
       <div className="mb-4 flex space-x-2 border bg-gray-50 p-2 rounded-lg">
+        {/* ... (botones de filtro sin cambios) ... */}
         <button onClick={() => setFiltro('todas')} className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors ${filtro === 'todas' ? 'bg-[#1C2A3D] text-white shadow' : 'bg-transparent text-gray-600 hover:bg-gray-200'}`}>Todas</button>
         <button onClick={() => setFiltro('semana')} className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors ${filtro === 'semana' ? 'bg-[#1C2A3D] text-white shadow' : 'bg-transparent text-gray-600 hover:bg-gray-200'}`}>Esta Semana</button>
         <button onClick={() => setFiltro('mes')} className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors ${filtro === 'mes' ? 'bg-[#1C2A3D] text-white shadow' : 'bg-transparent text-gray-600 hover:bg-gray-200'}`}>Este Mes</button>
         <button onClick={() => setFiltro('año')} className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors ${filtro === 'año' ? 'bg-[#1C2A3D] text-white shadow' : 'bg-transparent text-gray-600 hover:bg-gray-200'}`}>Este Año</button>
       </div>
 
+      {/* Tabla de Reservas */}
       <div className="bg-white rounded-lg shadow-md p-6">
         {loading ? (
             <p className="text-center p-8">Cargando reservas...</p>
@@ -234,6 +245,7 @@ const ReservationsManager = () => {
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto">
                     <thead>
+                        {/* ... (cabecera de tabla sin cambios) ... */}
                         <tr className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                             <th className="py-3 px-6">Habitación</th>
                             <th className="py-3 px-6">Huésped</th>
@@ -246,6 +258,7 @@ const ReservationsManager = () => {
                     <tbody className="text-gray-600 text-sm font-light">
                         {currentItems.length > 0 ? currentItems.map((reserva) => (
                         <tr key={reserva._id} className="border-b border-gray-200 hover:bg-gray-100">
+                            {/* ... (contenido de la fila sin cambios) ... */}
                             <td className="py-4 px-6 font-medium">
                                 {reserva.habitacion ? `No. ${reserva.habitacion.numero} (${reserva.habitacion.tipo})` : <span className="text-red-500">Hab. Borrada</span>}
                             </td>
@@ -266,7 +279,6 @@ const ReservationsManager = () => {
                                     {reserva.estado === 'pendiente' && <button onClick={() => handleUpdateStatus(reserva._id, 'confirmada')} className="text-green-500 hover:text-green-700" title="Confirmar">✅</button>}
                                     {reserva.estado !== 'cancelada' && <button onClick={() => handleUpdateStatus(reserva._id, 'cancelada')} className="text-orange-500 hover:text-orange-700" title="Cancelar">❌</button>}
                                     <button onClick={() => handleDelete(reserva._id)} className="text-red-500 hover:text-red-700" title="Eliminar">🗑️</button>
-                                    {/* --- BOTÓN DE CONTRATO --- */}
                                     <a
                                         href={`http://localhost:5000/api/reservas/${reserva._id}/contrato?tipo=contrato_tipo1`}
                                         target="_blank"
@@ -291,7 +303,8 @@ const ReservationsManager = () => {
       {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-6 space-x-2">
-          <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 border rounded-md disabled:opacity-50">Anterior</button>
+           {/* ... (código de paginación sin cambios) ... */}
+           <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 border rounded-md disabled:opacity-50">Anterior</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button key={page} onClick={() => paginate(page)} className={`px-4 py-2 border rounded-md ${currentPage === page ? 'bg-[#6C7D5C] text-white' : 'hover:bg-gray-200'}`}>
                     {page}
@@ -322,6 +335,7 @@ const ReservationsManager = () => {
                         {users.map(user => <option key={user._id} value={user._id}>{user.username}</option>)}
                     </select>
                 </div>
+                
                 {/* Campos para huésped público si no se selecciona usuario */}
                 {!formData.usuarioId && (
                     <>
@@ -329,12 +343,31 @@ const ReservationsManager = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Huésped Público *</label>
                             <input type="text" name="nombreHuesped" value={formData.nombreHuesped} onChange={handleChange} required className="w-full mt-1 p-2 border rounded-md focus:ring-[#6C7D5C] focus:border-[#6C7D5C]"/>
                         </div>
+                        
+                        {/* --- 3. AÑADIDO CAMPO DE TELÉFONO AL FORMULARIO --- */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono Huésped Público *</label>
+                            <input 
+                                type="tel" 
+                                name="telefonoHuesped" 
+                                value={formData.telefonoHuesped} 
+                                onChange={handleChange} 
+                                required 
+                                pattern="^\d{10}$"
+                                title="Introduce 10 dígitos sin espacios ni guiones"
+                                className="w-full mt-1 p-2 border rounded-md focus:ring-[#6C7D5C] focus:border-[#6C7D5C]"
+                            />
+                        </div>
+                        {/* ------------------------------------------- */}
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Email Huésped Público (para notificación)</label>
                             <input type="email" name="emailHuesped" value={formData.emailHuesped} onChange={handleChange} className="w-full mt-1 p-2 border rounded-md focus:ring-[#6C7D5C] focus:border-[#6C7D5C]"/>
                         </div>
                     </>
                 )}
+
+                {/* Fechas */}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio *</label>
@@ -345,6 +378,7 @@ const ReservationsManager = () => {
                         <input type="date" name="fechaFin" value={formData.fechaFin} onChange={handleChange} required className="w-full mt-1 p-2 border rounded-md focus:ring-[#6C7D5C] focus:border-[#6C7D5C]"/>
                     </div>
                 </div>
+                {/* Pago y Estado */}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pago *</label>
@@ -362,6 +396,7 @@ const ReservationsManager = () => {
                         </select>
                     </div>
                 </div>
+                {/* Botones de Acción */}
                 <div className="flex justify-end gap-4 pt-4 border-t mt-6">
                     <button type="button" onClick={handleCloseModal} className="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancelar</button>
                     <button type="submit" className="py-2 px-4 bg-[#6C7D5C] text-white font-bold rounded-md hover:bg-[#5a6b4d]">{currentEditingReservation ? 'Guardar Cambios' : 'Crear Reserva'}</button>

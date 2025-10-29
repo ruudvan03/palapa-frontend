@@ -5,9 +5,11 @@ import DashboardHome from './components/dashboard/DashboardHome.jsx';
 import UserManager from './components/dashboard/UserManager.jsx';
 import RoomsManager from './components/dashboard/RoomsManager.jsx';
 import ReservationsManager from './components/dashboard/ReservationsManager.jsx';
-import MenuManager from './components/dashboard/MenuManager.jsx';
+// import MenuManager from './components/dashboard/MenuManager.jsx'; // <-- Ya no lo usamos
 import StatsManager from './components/dashboard/StatsManager.jsx';
-import PublicHome from './components/PublicHome.jsx'; // Nuevo componente para la página pública
+import PublicHome from './components/PublicHome.jsx';
+// --- AÑADIR NUEVO IMPORTE ---
+import EventManager from './components/dashboard/EventManager.jsx'; 
 
 const MainContent = ({ user, currentPage }) => {
   switch (currentPage) {
@@ -19,8 +21,10 @@ const MainContent = ({ user, currentPage }) => {
       return <RoomsManager />;
     case 'reservations':
       return <ReservationsManager />;
-    case 'menu':
-      return <MenuManager />;
+    // --- CAMBIO AQUÍ ---
+    case 'eventos': // 'menu' se convierte en 'eventos'
+      return <EventManager />; // Renderiza el nuevo componente
+    // --- FIN DEL CAMBIO ---
     case 'stats':
       return <StatsManager />;
     default:
@@ -29,19 +33,20 @@ const MainContent = ({ user, currentPage }) => {
 };
 
 function App() {
+  // ... (El resto de la función App se queda igual) ...
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [showLogin, setShowLogin] = useState(false); // Nuevo estado para mostrar el modal de login
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     setCurrentPage('dashboard');
-    setShowLogin(false); // Ocultar el login al entrar
+    setShowLogin(false);
   };
 
   const handleLogout = () => {
     setUser(null);
-    setCurrentPage('dashboard'); // Volver al inicio público
+    setCurrentPage('dashboard');
   };
 
   const handleShowLogin = (shouldShow) => {
@@ -51,16 +56,13 @@ function App() {
   return (
     <div className="app-container min-h-screen">
       {user ? (
-        // Si el usuario está logueado, muestra el panel de administración
         <DashboardLayout user={user} onLogout={handleLogout} onNavigate={setCurrentPage}>
           <MainContent user={user} currentPage={currentPage} />
         </DashboardLayout>
       ) : (
-        // Si el usuario NO está logueado, muestra la página pública
         <PublicHome onShowLogin={handleShowLogin} /> 
       )}
 
-      {/* Modal de Login que se muestra sobre la página pública */}
       {showLogin && !user && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="relative">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) => {
-    
+
     // Estados internos
     const [step, setStep] = useState('RESULTS');
     const [selectedRoom, setSelectedRoom] = useState(null);
@@ -43,7 +43,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
     };
 
     const totalNights = calculateNights(searchData.llegada, searchData.salida);
-    
+
     // Cálculo seguro de precio
     const calculatedPrice = selectedRoom?.precio ? (selectedRoom.precio * totalNights) : 0;
     const roomPrice = calculatedPrice.toFixed(2);
@@ -75,6 +75,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             const response = await fetch('http://localhost:5000/api/reservas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // *** CORRECCIÓN AQUÍ: Añadido telefono ***
                 body: JSON.stringify({
                     habitacionId: selectedRoom._id,
                     fechaInicio: searchData.llegada,
@@ -82,9 +83,12 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
                     tipoPago: clientData.tipoPago,
                     clientName: clientData.nombre,
                     clientEmail: clientData.email,
-                    emailHuesped: clientData.email,
-                    nombreHuesped: clientData.nombre
+                    telefono: clientData.telefono, // <-- Teléfono incluido
+                    // Puedes quitar nombreHuesped y emailHuesped si clientName/clientEmail son suficientes
+                    // nombreHuesped: clientData.nombre,
+                    // emailHuesped: clientData.email,
                 }),
+                // *** FIN CORRECCIÓN ***
             });
 
             if (!response.ok) {
@@ -93,13 +97,13 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             }
 
             const data = await response.json();
-            
+
             if (clientData.tipoPago === 'transferencia' && data.configuracionPago) {
                 setPaymentSuccess(data.configuracionPago);
             } else {
                 setPaymentSuccess({ tipo: 'efectivo' }); // Indicador para efectivo
             }
-            
+
             setStep('SUCCESS');
 
         } catch (error) {
@@ -107,7 +111,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             setCheckoutError(error.message || 'Error en el servidor al intentar reservar.');
         }
     };
-    
+
     // --- VISTAS DEL MODAL (CÓDIGO JSX COMPLETO) ---
 
     const renderResultsView = () => (
@@ -154,7 +158,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
                 ← Volver a selección
             </button>
             <h4 className="text-2xl font-bold text-[#1C2A3D] mb-4">Finalizar Reserva</h4>
-            
+
             {checkoutError && (
                 <div className="bg-red-100 text-red-700 p-3 rounded mb-4 border border-red-300 text-sm">{checkoutError}</div>
             )}
@@ -187,7 +191,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
     const renderSuccessView = () => (
         <div className="p-6 text-center">
             <h4 className="text-3xl font-bold text-green-600 mb-4">¡Reserva Pendiente! 🎉</h4>
-            
+
             {paymentSuccess?.tipo === 'efectivo' ? (
                 <div className="mt-6">
                     <p className="text-lg mb-4 text-gray-700">Se ha enviado un correo a <strong>{clientData.email}</strong> con el resumen. Tu reserva está <strong>pendiente</strong>. El monto de <strong>${roomPrice}</strong> se liquidará en efectivo al check-in.</p>
@@ -209,13 +213,13 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             ) : (
                  <p className="mt-6 text-lg text-gray-700">Se ha enviado un correo a <strong>{clientData.email}</strong> con los detalles de tu reserva.</p>
             )}
-            
+
             <button onClick={onClose} className="mt-8 w-full py-3 bg-[#1C2A3D] text-white font-bold rounded-lg hover:bg-[#D4AF37] hover:text-[#1C2A3D] transition-colors">
                 Finalizar
             </button>
         </div>
     );
-    
+
     // Función para decidir qué vista mostrar
     const renderContent = () => {
         switch (step) {
@@ -236,7 +240,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
                         <button onClick={onClose} className="text-2xl hover:text-red-400">×</button>
                     </div>
                 )}
-                
+
                 {/* Contenido principal (scrollable) */}
                 <div className="flex-grow overflow-y-auto">
                     {renderContent()}

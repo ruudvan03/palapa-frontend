@@ -16,7 +16,9 @@ const Sidebar = ({ user, onLogout, onNavigate }) => {
             { page: 'dashboard', label: 'Dashboard', icon: '🏠' },
             { page: 'reservations', label: 'Reservas', icon: '📅' },
             { page: 'rooms', label: 'Habitaciones', icon: '🛌' },
-            { page: 'menu', label: 'Menú', icon: '🍽️' },
+            // --- CAMBIO AQUÍ ---
+            { page: 'eventos', label: 'Eventos', icon: '🎉' }, 
+            // --- FIN DEL CAMBIO ---
             { page: 'stats', label: 'Estadísticas', icon: '📊' },
           ].map(({ page, label, icon }) => (
             <li key={page}>

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import ReservationModal from './ReservationModal';
-import RoomCard from './RoomCard'; // <-- Importa el nuevo componente
+import RoomCard from './RoomCard'; // <-- Importa el componente RoomCard
 
 // DATOS DE UBICACIÓN
 const LOCATION_DATA = {
     name: "Palapa La Casona",
     address: "Carretera Costera 200, Llano Grande, 70947 San Pedro Pochutla, Oax.",
-    mapsUrl: "YOUR_GOOGLE_MAPS_URL_HERE", // Reemplaza con tu URL real o usa una variable de entorno
+    mapsUrl: "https://maps.app.goo.gl/JzKp4av7E7uwdWsM7", // URL actualizada
     displayAddress: "Carretera Costera 200, Llano Grande, San Pedro Pochutla, Oax."
 };
 
-// YA NO NECESITAMOS getRoomDescription aquí, se movió a RoomCard.jsx
+// YA NO NECESITAMOS getRoomDescription aquí, está en RoomCard.jsx
 
 const PublicHome = ({ onShowLogin }) => {
 
@@ -23,6 +23,12 @@ const PublicHome = ({ onShowLogin }) => {
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [initialLoadError, setInitialLoadError] = useState(null);
     const [searchId, setSearchId] = useState(null);
+    // ===== Estados para Galería Alberca =====
+    const [poolImages, setPoolImages] = useState([]); // URLs de alberca
+    const [currentPoolImageIndex, setCurrentPoolImageIndex] = useState(0); // Índice actual alberca
+    // ===== Estados para Galería Comida =====
+    const [foodImages, setFoodImages] = useState([]); // URLs de comida
+    const [currentFoodImageIndex, setCurrentFoodImageIndex] = useState(0); // Índice actual comida
 
     // Altura del hero a 100vh
     const heroHeightVh = 100;
@@ -34,22 +40,50 @@ const PublicHome = ({ onShowLogin }) => {
             setLoadingRooms(true);
             setInitialLoadError(null);
             let roomsData = [];
+            // --- Fetch Habitaciones ---
             try {
-                // Ahora esta ruta debe devolver el array imageUrls
                 const roomsResponse = await fetch('http://localhost:5000/api/habitaciones');
                 if (!roomsResponse.ok) { throw new Error(`Error ${roomsResponse.status} al cargar habitaciones`); }
                 roomsData = await roomsResponse.json();
-                console.log("Habitaciones cargadas:", roomsData); // Verifica si llega imageUrls
+                console.log("Habitaciones cargadas:", roomsData);
             } catch (error) { console.error("Error fetch habitaciones:", error); setInitialLoadError(error.message); }
+            // --- Fetch Configuración ---
             try {
                 const configResponse = await fetch('http://localhost:5000/api/config/contacto');
                  if (configResponse.ok) { const configData = await configResponse.json(); if (configData.whatsappUrl) { setWhatsappLink(configData.whatsappUrl); } }
                  else { console.error("Fetch config falló:", configResponse.status); }
             } catch (error) { console.error("Error fetch config:", error); }
+
+            // ===== Fetch Imágenes Alberca =====
+            try {
+                const poolImagesResponse = await fetch('http://localhost:5000/api/gallery/pool');
+                if (poolImagesResponse.ok) {
+                    const poolUrls = await poolImagesResponse.json();
+                    setPoolImages(poolUrls); // Guardar URLs en el estado
+                    console.log("Imágenes de alberca cargadas:", poolUrls);
+                } else {
+                    console.error("Error al cargar imágenes de alberca:", poolImagesResponse.status);
+                }
+            } catch (error) {
+                console.error("Error fetch imágenes alberca:", error);
+            }
+
+            // ===== Fetch Imágenes Comida =====
+            try {
+                const foodImagesResponse = await fetch('http://localhost:5000/api/gallery/food');
+                if (foodImagesResponse.ok) {
+                    const foodUrls = await foodImagesResponse.json();
+                    setFoodImages(foodUrls); // Guardar URLs
+                    console.log("Imágenes de comida cargadas:", foodUrls);
+                } else {
+                    console.error("Error al cargar imágenes de comida:", foodImagesResponse.status);
+                }
+            } catch (error) { console.error("Error fetch imágenes comida:", error); }
+
             finally { setAllRooms(roomsData); setLoadingRooms(false); }
         };
         fetchInitialData();
-    }, []);
+    }, []); // El array vacío asegura que se ejecute solo una vez al montar
 
     const handleChange = (e) => {
         setSearchData({ ...searchData, [e.target.name]: e.target.value });
@@ -99,6 +133,30 @@ const PublicHome = ({ onShowLogin }) => {
             console.error("Error durante la búsqueda:", error);
             setSearchError(error.message || "Error de conexión con el servidor.");
         }
+    };
+
+    // ===== Funciones Navegación Alberca =====
+    const goToNextPoolImage = () => {
+        if (poolImages.length > 0) {
+             setCurrentPoolImageIndex((prevIndex) => (prevIndex + 1) % poolImages.length);
+        }
+    };
+    const goToPreviousPoolImage = () => {
+         if (poolImages.length > 0) {
+            setCurrentPoolImageIndex((prevIndex) => (prevIndex - 1 + poolImages.length) % poolImages.length);
+         }
+    };
+
+    // ===== Funciones Navegación Comida =====
+    const goToNextFoodImage = () => {
+        if (foodImages.length > 0) {
+             setCurrentFoodImageIndex((prevIndex) => (prevIndex + 1) % foodImages.length);
+        }
+    };
+    const goToPreviousFoodImage = () => {
+         if (foodImages.length > 0) {
+            setCurrentFoodImageIndex((prevIndex) => (prevIndex - 1 + foodImages.length) % foodImages.length);
+         }
     };
 
 
@@ -177,55 +235,130 @@ const PublicHome = ({ onShowLogin }) => {
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestras <span className="text-[#D4AF37]">Habitaciones</span></h3>
                         {loadingRooms ? <p className="text-center text-lg">Cargando...</p> : !initialLoadError && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {/* ===== INICIO USO RoomCard ===== */}
                                 {allRooms.map((room) => (
                                     <RoomCard
                                         key={room._id}
                                         room={room}
-                                        onReserveClick={handleSearch} // Pasa la función handleSearch para el botón Reservar
+                                        onReserveClick={handleSearch}
                                     />
                                 ))}
-                                {/* ===== FIN USO RoomCard ===== */}
                             </div>
                         )}
                     </section>
 
                     <hr className="my-16 border-gray-300/50" />
 
-                    {/* Sección Restaurante */}
+                    {/* Sección Restaurante y Alberca */}
                     <section id="restaurante" className="py-12 px-6 md:px-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
                          <h3 className="text-4xl font-extrabold text-center mb-12">Restaurante y <span className="text-[#D4AF37]">Alberca</span></h3>
+                         
+                         {/* ===== INICIO: Grid Restaurante CORREGIDO ===== */}
                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                             <div className="h-80 rounded-xl shadow-lg bg-cover bg-center" style={{ backgroundImage: "url('https://source.unsplash.com/600x400/?mexican+restaurant,oaxaca+cuisine')" }}></div>
+                            {/* Columna Izquierda - Carrusel Comida */}
+                            <div className="h-80 rounded-xl shadow-lg relative group overflow-hidden bg-gray-200">
+                                {foodImages.length > 0 ? (
+                                    <>
+                                        {/* Imagen de fondo */}
+                                        <div
+                                            className="h-full w-full bg-cover bg-center transition-opacity duration-500 ease-in-out"
+                                            style={{ backgroundImage: `url('http://localhost:5000${foodImages[currentFoodImageIndex]}')` }}
+                                            key={`food-${currentFoodImageIndex}`}
+                                        ></div>
+                                        {/* Botones */}
+                                        {foodImages.length > 1 && (
+                                            <>
+                                                <button onClick={goToPreviousFoodImage} className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 focus:outline-none transition-opacity opacity-0 group-hover:opacity-100 z-10" aria-label="Anterior Comida">❮</button>
+                                                <button onClick={goToNextFoodImage} className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 focus:outline-none transition-opacity opacity-0 group-hover:opacity-100 z-10" aria-label="Siguiente Comida">❯</button>
+                                                {/* Indicadores */}
+                                                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                    {foodImages.map((_, index) => (
+                                                        <span key={index} className={`block h-2 w-2 rounded-full cursor-pointer ${index === currentFoodImageIndex ? 'bg-white' : 'bg-gray-400 hover:bg-gray-200'}`} onClick={() => setCurrentFoodImageIndex(index)}></span>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    // Placeholder Comida
+                                    <div className="h-full w-full flex items-center justify-center text-gray-500 italic" style={{ backgroundImage: "url('https://source.unsplash.com/600x400/?mexican+restaurant,oaxaca+cuisine')" }}>
+                                        <div className="h-full w-full flex items-center justify-center bg-black bg-opacity-30 text-white p-4">
+                                            Galería no disponible
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Columna Derecha - Texto Restaurante (Botón eliminado) */}
                              <div>
                                  <h4 className="text-3xl font-bold text-[#6C7D5C] mb-4">Sabores Oaxaqueños</h4>
                                  <p className="text-lg text-gray-800 mb-6">Ingredientes locales frescos en un ambiente rústico.</p>
-                                 <a href="#" className="inline-block py-3 px-6 bg-[#6C7D5C] text-white font-semibold rounded-lg">Ver Menú</a>
+                                 {/* Botón "Ver Menú" ELIMINADO */}
                              </div>
                          </div>
+                         {/* ===== FIN: Grid Restaurante CORREGIDO ===== */}
+
+                         {/* Grid Alberca */}
                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-16">
+                             {/* Columna Texto Alberca */}
                              <div>
                                  <h4 className="text-3xl font-bold text-[#6C7D5C] mb-4">Relájate en la Alberca</h4>
                                  <p className="text-lg text-gray-800 mb-6">Disfruta del clima de Oaxaca en nuestra alberca.</p>
-                                 <a href="#" className="inline-block py-3 px-6 bg-[#6C7D5C] text-white font-semibold rounded-lg">Ver Galería</a>
                              </div>
-                             <div className="h-80 rounded-xl shadow-lg bg-cover bg-center" style={{ backgroundImage: "url('https://source.unsplash.com/600x400/?oaxaca+pool,hotel+swimming')" }}></div>
+                             {/* Columna Carrusel Alberca */}
+                             <div className="h-80 rounded-xl shadow-lg relative group overflow-hidden bg-gray-200">
+                                {poolImages.length > 0 ? (
+                                    <>
+                                        {/* Imagen de fondo */}
+                                        <div
+                                            className="h-full w-full bg-cover bg-center transition-opacity duration-500 ease-in-out"
+                                            style={{ backgroundImage: `url('http://localhost:5000${poolImages[currentPoolImageIndex]}')` }}
+                                            key={`pool-${currentPoolImageIndex}`}
+                                        ></div>
+                                        {/* Botones */}
+                                        {poolImages.length > 1 && (
+                                            <>
+                                                <button onClick={goToPreviousPoolImage} className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 focus:outline-none transition-opacity opacity-0 group-hover:opacity-100 z-10" aria-label="Anterior Alberca">❮</button>
+                                                <button onClick={goToNextPoolImage} className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 focus:outline-none transition-opacity opacity-0 group-hover:opacity-100 z-10" aria-label="Siguiente Alberca">❯</button>
+                                                {/* Indicadores */}
+                                                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                    {poolImages.map((_, index) => (
+                                                        <span key={index} className={`block h-2 w-2 rounded-full cursor-pointer ${index === currentPoolImageIndex ? 'bg-white' : 'bg-gray-400 hover:bg-gray-200'}`} onClick={() => setCurrentPoolImageIndex(index)}></span>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    // Placeholder Alberca
+                                    <div className="h-full w-full flex items-center justify-center text-gray-500 italic">
+                                        Galería no disponible
+                                    </div>
+                                )}
+                             </div>
                         </div>
                     </section>
 
                     <hr className="my-16 border-gray-300/50" />
 
                     {/* Sección Ubicación */}
-                    <section id="ubicacion" className="py-12 px-6 md:px-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
+                   <section id="ubicacion" className="py-12 px-6 md:px-12 rounded-xl border border-gray-300/30 bg-white/70 backdrop-blur-sm shadow-md">
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestra <span className="text-[#D4AF37]">Ubicación</span></h3>
-                        <div className="rounded-xl overflow-hidden">
-                            {/* Reemplaza TU_CLAVE_DE_API_AQUI con tu clave real de Google Maps Static API si quieres usarla */}
-                            <a href={LOCATION_DATA.mapsUrl} target="_blank" rel="noopener noreferrer" title="Navegar" className="block h-96 w-full relative group">
-                                <div className="h-full w-full bg-gray-300 bg-cover bg-center" style={{ backgroundImage: "url('https://maps.googleapis.com/maps/api/staticmap?center=15.73067,-96.53540&zoom=14&size=600x400&markers=color:red%7Clabel:P%7C15.73067,-96.53540&key=TU_CLAVE_DE_API_AQUI')" }}>
-                                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100"><p className="text-white text-2xl font-bold">🗺️ Toca para Navegar</p></div>
-                                </div>
-                            </a>
-                            <div className="p-6 text-center rounded-b-xl">
+                        <div className="rounded-xl overflow-hidden shadow-lg">
+                            
+                            {/* --- Tu iframe adaptado para React/Tailwind --- */}
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3840.3865245912934!2d-96.5379755263523!3d15.730678748415245!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85b8d7a645836183%3A0xaa2fd69b1b5b584d!2sPalapa%20La%20Casona!5e0!3m2!1ses-419!2smx!4v1761617292777!5m2!1ses-419!2smx" // La URL que copiaste
+                                width="100%" 
+                                height="450" 
+                                style={{ border: 0 }} // 'style' en JSX usa doble llave
+                                allowFullScreen="" // 'allowfullscreen' se convierte en 'allowFullScreen'
+                                loading="lazy" 
+                                referrerPolicy="no-referrer-when-downgrade"
+                                className="w-full" // Asegura que ocupe el 100% del ancho
+                            ></iframe>
+                            {/* --- Fin del iframe --- */}
+                            
+                            <div className="p-6 text-center rounded-b-xl bg-white/70 backdrop-blur-sm">
                                 <p className="text-xl font-semibold mb-4">{LOCATION_DATA.displayAddress}</p>
                                 <a href={LOCATION_DATA.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center py-3 px-8 bg-[#D4AF37] text-[#1C2A3D] font-bold rounded-lg">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m10.606 0a3.5 3.5 0 11-5.656 0m5.656 0H12m-5.657 0a3.5 3.5 0 11-5.656 0M12 10a2 2 0 100-4 2 2 0 000 4z" /></svg>

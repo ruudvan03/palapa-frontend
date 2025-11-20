@@ -8,7 +8,7 @@ const DashboardHome = ({ user }) => {
 
   const fetchStats = async () => {
     try {
-      setLoading(true); // Asegurarse de mostrar carga
+      setLoading(true); 
       const response = await fetch('http://localhost:5000/api/stats/reservas');
       if (!response.ok) {
         const errorText = await response.text();
@@ -27,7 +27,6 @@ const DashboardHome = ({ user }) => {
     fetchStats();
   }, []);
 
-  // --- RENDERIZADO ---
 
   if (loading) {
     return <div className="p-8 text-center text-lg text-gray-600">Cargando información del Dashboard...</div>;
@@ -41,9 +40,7 @@ const DashboardHome = ({ user }) => {
     </div>;
   }
 
-  // --- CÁLCULOS SEGUROS ---
-  // Se usa '|| 0' y 'optional chaining' (?.) para prevenir errores si un dato es null o undefined
-  
+
   const totalIngresosReservas = (stats.totalIngresosReservas || 0);
   const totalIngresosEventos = (stats.totalIngresosEventos || 0);
   const totalIngresos = totalIngresosReservas + totalIngresosEventos;

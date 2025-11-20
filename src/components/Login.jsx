@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// Importamos el logo para usarlo en el modal
 import logoLaCasona from '../assets/logo-lacasona.png'; 
 
 const Login = ({ onLoginSuccess }) => {

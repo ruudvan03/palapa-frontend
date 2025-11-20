@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) => {
 
-    // Estados internos
     const [step, setStep] = useState('RESULTS');
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [checkoutError, setCheckoutError] = useState(null);
@@ -14,7 +13,6 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
         tipoPago: 'transferencia',
     });
 
-    // useEffect para reiniciar el estado cuando el modal se abre
     useEffect(() => {
         if (isVisible) {
             setStep('RESULTS');
@@ -28,18 +26,17 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
                 tipoPago: 'transferencia',
             });
         }
-    }, [isVisible]); // Esta dependencia es clave
+    }, [isVisible]); 
 
     // No renderizar nada si no es visible
     if (!isVisible) return null;
 
-    // --- Funciones auxiliares y manejadores ---
 
     const calculateNights = (start, end) => {
         if (!start || !end) return 0;
         const diffTime = Math.abs(new Date(end) - new Date(start));
         const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return nights > 0 ? nights : 1; // Mínimo 1 noche
+        return nights > 0 ? nights : 1; 
     };
 
     const totalNights = calculateNights(searchData.llegada, searchData.salida);
@@ -75,7 +72,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             const response = await fetch('http://localhost:5000/api/reservas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // *** CORRECCIÓN AQUÍ: Añadido telefono ***
+
                 body: JSON.stringify({
                     habitacionId: selectedRoom._id,
                     fechaInicio: searchData.llegada,
@@ -83,12 +80,10 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
                     tipoPago: clientData.tipoPago,
                     clientName: clientData.nombre,
                     clientEmail: clientData.email,
-                    telefono: clientData.telefono, // <-- Teléfono incluido
-                    // Puedes quitar nombreHuesped y emailHuesped si clientName/clientEmail son suficientes
-                    // nombreHuesped: clientData.nombre,
-                    // emailHuesped: clientData.email,
+                    telefono: clientData.telefono, 
+                    
                 }),
-                // *** FIN CORRECCIÓN ***
+                
             });
 
             if (!response.ok) {
@@ -101,7 +96,7 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
             if (clientData.tipoPago === 'transferencia' && data.configuracionPago) {
                 setPaymentSuccess(data.configuracionPago);
             } else {
-                setPaymentSuccess({ tipo: 'efectivo' }); // Indicador para efectivo
+                setPaymentSuccess({ tipo: 'efectivo' }); 
             }
 
             setStep('SUCCESS');
@@ -112,13 +107,13 @@ const ReservationModal = ({ isVisible, onClose, searchData, availableRooms }) =>
         }
     };
 
-    // --- VISTAS DEL MODAL (CÓDIGO JSX COMPLETO) ---
+    // --- VISTAS DEL MODAL  ---
 
     const renderResultsView = () => (
         <div className="p-6 max-h-[70vh] overflow-y-auto">
             {availableRooms.length === 0 ? (
                 <div className="text-center py-10">
-                    <p className="text-xl font-semibold text-red-500">❌ ¡Lo sentimos!</p>
+                    <p className="text-xl font-semibold text-red-500"> ¡Lo sentimos!</p>
                     <p className="text-gray-600 mt-2">No hay habitaciones disponibles para las fechas seleccionadas ({searchData.llegada} al {searchData.salida}).</p>
                     <p className="text-sm text-gray-500 mt-1">Intenta con un rango de fechas diferente.</p>
                 </div>

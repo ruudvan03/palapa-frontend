@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// Función auxiliar para obtener descripción de habitación
 const getRoomDescription = (tipo) => {
     switch (tipo.toLowerCase()) {
         case 'individual': return "1 Cama Matrimonial (Máximo 2)";
@@ -14,52 +13,35 @@ const getRoomDescription = (tipo) => {
 
 // Componente RoomCard
 const RoomCard = ({ room, onReserveClick }) => {
-    // Estado para saber qué imagen mostrar
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // Imágenes disponibles para esta habitación (o array vacío si no hay)
     const images = Array.isArray(room.imageUrls) ? room.imageUrls : [];
     const totalImages = images.length;
 
-    // Imagen por defecto si no hay ninguna
     const defaultImageUrl = 'https://via.placeholder.com/600x400/cccccc/888888?text=Imagen+no+disponible';
 
-    // Función para ir a la imagen siguiente
     const goToNextImage = () => {
-        // Solo cambia si hay imágenes
         if (totalImages > 0) {
             setCurrentImageIndex((prevIndex) => (prevIndex + 1) % totalImages);
         }
     };
 
-    // Función para ir a la imagen anterior
     const goToPreviousImage = () => {
-        // Solo cambia si hay imágenes
         if (totalImages > 0) {
             setCurrentImageIndex((prevIndex) => (prevIndex - 1 + totalImages) % totalImages);
         }
     };
 
-    // Determinar la URL de la imagen actual a mostrar
     let displayImageUrl = defaultImageUrl;
     if (totalImages > 0) {
-        const currentUrl = images[currentImageIndex]; // Ejemplo: /images/ID/archivo.jpg
-        // Verifica si la URL es relativa (empieza con '/') y no está vacía
+        const currentUrl = images[currentImageIndex]; 
         if (currentUrl && typeof currentUrl === 'string' && currentUrl.startsWith('/')) {
-            // ===== CORRECCIÓN AQUÍ =====
-            // Construye la URL completa anteponiendo el origen del backend
-            // SIN '/habitaciones' extra
             displayImageUrl = `http://localhost:5000${currentUrl}`;
-            // ===========================
         } else if (currentUrl && typeof currentUrl === 'string') {
-            // Si no empieza con '/', asume que ya es una URL completa (ej. Cloudinary)
             displayImageUrl = currentUrl;
         }
-        // Si currentUrl no es válida o está vacía, se queda con defaultImageUrl
     }
-    // Log para depurar qué URL se está usando finalmente
-    // console.log(`RoomCard - Habitación ${room?.numero} - Imagen ${currentImageIndex}: ${displayImageUrl}`);
-
+ 
 
     // Obtener descripción
     const description = getRoomDescription(room.tipo);
@@ -68,7 +50,7 @@ const RoomCard = ({ room, onReserveClick }) => {
         <div className="rounded-xl overflow-hidden border border-gray-300/30 group bg-white/70 backdrop-blur-md shadow-lg transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl cursor-pointer">
             {/* Contenedor de la Imagen con Posición Relativa */}
             <div
-                className="h-52 w-full bg-cover bg-center rounded-t-xl relative" // Añadido 'relative'
+                className="h-52 w-full bg-cover bg-center rounded-t-xl relative" 
                 style={{ backgroundImage: `url('${displayImageUrl}')` }}
                 title={`Habitación ${room.tipo} ${room.numero}`}
             >
@@ -77,7 +59,7 @@ const RoomCard = ({ room, onReserveClick }) => {
                     <>
                         {/* Botón Anterior */}
                         <button
-                            onClick={(e) => { e.stopPropagation(); goToPreviousImage(); }} // Detener propagación
+                            onClick={(e) => { e.stopPropagation(); goToPreviousImage(); }} 
                             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 focus:outline-none transition-opacity opacity-0 group-hover:opacity-100 z-10" // Añadido z-10
                             aria-label="Imagen anterior"
                         >
@@ -130,4 +112,4 @@ const RoomCard = ({ room, onReserveClick }) => {
     );
 };
 
-export default RoomCard; // Asegúrate de exportar el componente
+export default RoomCard; 

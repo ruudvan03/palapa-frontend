@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import ReservationModal from './ReservationModal';
-import RoomCard from './RoomCard'; // <-- Importa el componente RoomCard
+import RoomCard from './RoomCard'; 
 
 // DATOS DE UBICACIÓN
 const LOCATION_DATA = {
     name: "Palapa La Casona",
     address: "Carretera Costera 200, Llano Grande, 70947 San Pedro Pochutla, Oax.",
-    mapsUrl: "https://maps.app.goo.gl/JzKp4av7E7uwdWsM7", // URL actualizada
+    mapsUrl: "https://maps.app.goo.gl/JzKp4av7E7uwdWsM7", 
     displayAddress: "Carretera Costera 200, Llano Grande, San Pedro Pochutla, Oax."
 };
 
-// YA NO NECESITAMOS getRoomDescription aquí, está en RoomCard.jsx
 
 const PublicHome = ({ onShowLogin }) => {
 
     const [allRooms, setAllRooms] = useState([]);
-    const [whatsappLink, setWhatsappLink] = useState('tel:+529514401726'); // Fallback
+    const [whatsappLink, setWhatsappLink] = useState('tel:+529514401726'); 
     const [searchData, setSearchData] = useState({ llegada: '', salida: '', huespedes: 1 });
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [availableRooms, setAvailableRooms] = useState([]);
@@ -23,14 +22,11 @@ const PublicHome = ({ onShowLogin }) => {
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [initialLoadError, setInitialLoadError] = useState(null);
     const [searchId, setSearchId] = useState(null);
-    // ===== Estados para Galería Alberca =====
-    const [poolImages, setPoolImages] = useState([]); // URLs de alberca
-    const [currentPoolImageIndex, setCurrentPoolImageIndex] = useState(0); // Índice actual alberca
-    // ===== Estados para Galería Comida =====
-    const [foodImages, setFoodImages] = useState([]); // URLs de comida
-    const [currentFoodImageIndex, setCurrentFoodImageIndex] = useState(0); // Índice actual comida
+    const [poolImages, setPoolImages] = useState([]); 
+    const [currentPoolImageIndex, setCurrentPoolImageIndex] = useState(0); 
+    const [foodImages, setFoodImages] = useState([]); 
+    const [currentFoodImageIndex, setCurrentFoodImageIndex] = useState(0); 
 
-    // Altura del hero a 100vh
     const heroHeightVh = 100;
     const heroHeightStyle = { height: `${heroHeightVh}vh` };
     const mainPaddingTopStyle = { paddingTop: `${heroHeightVh}vh` };
@@ -59,7 +55,7 @@ const PublicHome = ({ onShowLogin }) => {
                 const poolImagesResponse = await fetch('http://localhost:5000/api/gallery/pool');
                 if (poolImagesResponse.ok) {
                     const poolUrls = await poolImagesResponse.json();
-                    setPoolImages(poolUrls); // Guardar URLs en el estado
+                    setPoolImages(poolUrls); 
                     console.log("Imágenes de alberca cargadas:", poolUrls);
                 } else {
                     console.error("Error al cargar imágenes de alberca:", poolImagesResponse.status);
@@ -73,7 +69,7 @@ const PublicHome = ({ onShowLogin }) => {
                 const foodImagesResponse = await fetch('http://localhost:5000/api/gallery/food');
                 if (foodImagesResponse.ok) {
                     const foodUrls = await foodImagesResponse.json();
-                    setFoodImages(foodUrls); // Guardar URLs
+                    setFoodImages(foodUrls); 
                     console.log("Imágenes de comida cargadas:", foodUrls);
                 } else {
                     console.error("Error al cargar imágenes de comida:", foodImagesResponse.status);
@@ -83,7 +79,7 @@ const PublicHome = ({ onShowLogin }) => {
             finally { setAllRooms(roomsData); setLoadingRooms(false); }
         };
         fetchInitialData();
-    }, []); // El array vacío asegura que se ejecute solo una vez al montar
+    }, []); 
 
     const handleChange = (e) => {
         setSearchData({ ...searchData, [e.target.name]: e.target.value });
@@ -288,14 +284,14 @@ const PublicHome = ({ onShowLogin }) => {
                                 )}
                             </div>
                             
-                            {/* Columna Derecha - Texto Restaurante (Botón eliminado) */}
+                            {/* Columna Derecha - Texto Restaurante  */}
                              <div>
                                  <h4 className="text-3xl font-bold text-[#6C7D5C] mb-4">Sabores Oaxaqueños</h4>
                                  <p className="text-lg text-gray-800 mb-6">Ingredientes locales frescos en un ambiente rústico.</p>
-                                 {/* Botón "Ver Menú" ELIMINADO */}
+                                 {/* */}
                              </div>
                          </div>
-                         {/* ===== FIN: Grid Restaurante CORREGIDO ===== */}
+                         {/* ===== FIN: Grid Restaurante  ===== */}
 
                          {/* Grid Alberca */}
                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-16">
@@ -345,18 +341,18 @@ const PublicHome = ({ onShowLogin }) => {
                         <h3 className="text-4xl font-extrabold text-center mb-12">Nuestra <span className="text-[#D4AF37]">Ubicación</span></h3>
                         <div className="rounded-xl overflow-hidden shadow-lg">
                             
-                            {/* --- Tu iframe adaptado para React/Tailwind --- */}
+                            {/* ---  --- */}
                             <iframe 
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3840.3865245912934!2d-96.5379755263523!3d15.730678748415245!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85b8d7a645836183%3A0xaa2fd69b1b5b584d!2sPalapa%20La%20Casona!5e0!3m2!1ses-419!2smx!4v1761617292777!5m2!1ses-419!2smx" // La URL que copiaste
                                 width="100%" 
                                 height="450" 
-                                style={{ border: 0 }} // 'style' en JSX usa doble llave
-                                allowFullScreen="" // 'allowfullscreen' se convierte en 'allowFullScreen'
+                                style={{ border: 0 }} 
+                                allowFullScreen="" 
                                 loading="lazy" 
                                 referrerPolicy="no-referrer-when-downgrade"
-                                className="w-full" // Asegura que ocupe el 100% del ancho
+                                className="w-full" 
                             ></iframe>
-                            {/* --- Fin del iframe --- */}
+                            {/* --- --- */}
                             
                             <div className="p-6 text-center rounded-b-xl bg-white/70 backdrop-blur-sm">
                                 <p className="text-xl font-semibold mb-4">{LOCATION_DATA.displayAddress}</p>
@@ -381,8 +377,8 @@ const PublicHome = ({ onShowLogin }) => {
             {/* --- FIN DIV CONTENEDOR --- */}
 
             <footer className="bg-[#1C2A3D] text-white py-10 text-center mt-20 relative z-20">
-                <p className="text-sm">© {new Date().getFullYear()} Palapa La Casona.</p>
-                <p className="text-xs mt-2 text-gray-400">Oaxaca.</p>
+                <p className="text-sm">© {new Date().getFullYear()} Palapa "La Casona".</p>
+                <p className="text-xs mt-2 text-gray-400">RUTER DIGITAL SOLUTIONS MX.</p>
             </footer>
 
             {/* --- Modal de Reservas --- */}
